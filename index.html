@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>storylove</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-dark:#1a1e1c;
+  --text-main:#4a3020;
+  --btn-bg:#fdf6e3;
+  --btn-border:#b8835b;
+  --dialog-bg:#fdf6e3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background-color:#1a1e1c;color:#e8e2d2;
+  font-family:'Cormorant Garamond',serif;
+  overflow:hidden;height:100vh;
+  display:flex;justify-content:center;align-items:center;
+  background-image:radial-gradient(circle,#2a3330 0%,#111 100%);
+}
+#game-container{
+  width:100%;max-width:1000px;height:100%;max-height:700px;
+  position:relative;background:#1b1c1e;
+  border:8px solid #c5a880;border-radius:12px;overflow:hidden;
+  box-shadow:0 0 50px rgba(0,0,0,.8),inset 0 0 20px rgba(0,0,0,.9);
+  display:flex;flex-direction:column;
+}
+
+/* ---------- ЗАСТАВКА ---------- */
+#screen-title{
+  width:100%;height:100%;
+  background:linear-gradient(to bottom,#4a5b59 0%,#2a3330 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;z-index:10;
+}
+#screen-title::before{
+  content:'';position:absolute;bottom:0;left:0;width:100%;height:40%;
+  background:url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,100 L10,60 L20,100 L30,40 L40,100 L50,50 L60,100 L70,30 L80,100 L90,60 L100,100 Z" fill="%231f2422"/></svg>');
+  background-size:100% 100%;z-index:1;
+}
+.game-title{
+  font-family:'Playfair Display',serif;font-weight:900;font-size:80px;
+  color:#fff5d1;text-shadow:4px 4px 0 #3e2a1a,0 0 20px #fff5d1;
+  margin-bottom:50px;z-index:10;letter-spacing:2px;
+}
+.menu-buttons{display:flex;flex-direction:column;gap:18px;z-index:10}
+.menu-btn{
+  font-family:'Playfair Display',serif;font-size:30px;color:#fff;
+  background:none;border:none;cursor:pointer;text-align:right;
+  transition:transform .3s,color .3s;position:relative;padding:4px 10px;
+}
+.menu-btn:hover{color:#c5a880;transform:translateX(15px)}
+.menu-btn::after{content:' ✦';opacity:0;transition:opacity .3s}
+.menu-btn:hover::after{opacity:1}
+
+/* ---------- ИГРА ---------- */
+#screen-game{display:none;width:100%;height:100%;flex-direction:column}
+#screen-game.active{display:flex}
+
+#stage{flex:1;position:relative;overflow:hidden;background:#0d1114;min-height:0}
+#stage canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+
+#top-bar{
+  position:absolute;top:15px;left:20px;right:20px;z-index:4;
+  display:flex;justify-content:space-between;pointer-events:none;
+}
+.tag{
+  color:#fff0d9;background:rgba(19,33,43,.85);padding:8px 15px;
+  border:1px solid rgba(191,160,121,.6);font-size:16px;border-radius:4px;
+  font-family:'Cormorant Garamond',serif;letter-spacing:1px;font-weight:600;
+}
+.tag-btn{
+  pointer-events:auto;background:rgba(19,33,43,.85);color:#fff0d9;
+  border:1px solid rgba(191,160,121,.6);border-radius:4px;
+  padding:8px 15px;font-family:'Cormorant Garamond',serif;font-weight:600;
+  font-size:16px;cursor:pointer;letter-spacing:1px;transition:background .3s;
+}
+.tag-btn:hover{background:#3b2e2a}
+
+/* ---------- ДИАЛОГОВОЕ ОКНО (ЗАПИСКА) ---------- */
+#dialog-container {
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  right: 20px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+#dialog-box{
+  pointer-events: auto;
+  position: relative;
+  background: var(--dialog-bg);
+  border: 3px solid #b8835b;
+  border-radius: 16px;
+  padding: 30px 35px 25px;
+  min-height: 160px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 20px rgba(184, 131, 91, 0.15);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+#dialog-box.fade-out{opacity:0; transform: translateY(15px)}
+
+#dialog-box::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 30px;
+  width: 130px;
+  height: 30px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 30"><path d="M0,0 L120,0 L110,15 L120,30 L0,30 L10,15 Z" fill="%23b35236"/><path d="M20,15 L25,5 L30,15 Z" fill="%23fdf6e3"/><circle cx="50" cy="15" r="3" fill="%23fdf6e3"/><path d="M70,15 Q75,10 80,15 Q75,20 70,15 Z" fill="%23fdf6e3"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 2;
+}
+
+#dialog-box::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: -15px;
+  width: 100px;
+  height: 100px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,95 Q20,95 25,75 Q30,55 50,60 Q70,55 75,75 Q80,95 50,95 Z" fill="%23c86a38"/><path d="M70,90 Q95,90 90,65 Q85,45 70,55 Q60,60 70,90 Z" fill="%23c86a38"/><path d="M30,65 L40,35 L50,55 Z" fill="%23c86a38"/><path d="M60,55 L70,35 L80,65 Z" fill="%23c86a38"/><path d="M33,60 L40,40 L45,55 Z" fill="%232b1d15"/><path d="M65,55 L70,40 L75,60 Z" fill="%232b1d15"/><path d="M35,70 Q50,80 65,70 Q50,90 35,70 Z" fill="%23fdf6e3"/><circle cx="42" cy="65" r="2.5" fill="%232b1d15"/><circle cx="58" cy="65" r="2.5" fill="%232b1d15"/><ellipse cx="50" cy="75" rx="3" ry="2" fill="%232b1d15"/><path d="M15,90 Q20,85 25,90 Q20,95 15,90 Z" fill="%23a39b8b"/><path d="M20,82 Q25,80 28,85 Q23,88 20,82 Z" fill="%23c89f5a"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#speaker{
+  font-family:'Playfair Display',serif;font-weight:700;color:#8c4a2f;font-size:15px;
+  letter-spacing:2px;margin-bottom:10px;text-transform: uppercase;
+}
+#dialog-text{
+  font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1.5;
+  color:var(--text-main);margin-bottom:20px;white-space:pre-wrap;font-weight:600;
+  z-index: 3; position: relative;
+}
+#dialog-options{display:flex;gap:15px;flex-wrap:wrap;z-index: 3; position: relative}
+
+.option-btn{
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--text-main);
+  border: 2px solid var(--btn-border);
+  padding: 8px 20px;
+  font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;
+  cursor:pointer;transition:all .3s;border-radius:8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.option-btn:hover{
+  background: var(--btn-border);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* ---------- ФИНАЛ ---------- */
+#game-over,#game-win{
+  display:none;position:absolute;inset:0;
+  background:rgba(0,0,0,.95);z-index:200;
+  flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;padding:30px;overflow-y:auto;
+}
+#game-over h1{
+  color:#ff3333;font-family:'Playfair Display',serif;font-weight:900;font-size:40px;
+  margin-bottom:20px;text-shadow:0 0 15px #ff0000;
+}
+#game-win h1{
+  color:#ff66b2;font-family:'Playfair Display',serif;font-weight:900;font-size:36px;
+  margin-bottom:16px;text-shadow:0 0 20px #ff66b2;
+}
+.game-text{
+  font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px;line-height:1.7;
+  margin-bottom:20px;max-width:600px;
+}
+.heart-anim{font-size:70px;color:#ff3366;animation:heartbeat 1s infinite;margin-top:10px}
+.broken-heart{font-size:70px;color:#888;margin-top:10px}
+@keyframes heartbeat{
+  0%{transform:scale(1)} 15%{transform:scale(1.3)} 30%{transform:scale(1)}
+  45%{transform:scale(1.3)} 60%{transform:scale(1)}
+}
+
+.compat-meter{width:85%;max-width:450px;margin:15px 0 10px}
+.compat-label{
+  font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:#c5a880;
+  margin-bottom:10px;letter-spacing:2px;
+}
+.compat-bar{
+  height:24px;background:rgba(255,255,255,0.08);
+  border:2px solid #c5a880;border-radius:12px;overflow:hidden;position:relative;
+}
+.compat-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#a83253,#ff3366,#ff66b2);
+  transition:width 2s cubic-bezier(0.22,1,0.36,1);
+  box-shadow:0 0 15px rgba(255,51,102,0.6);border-radius:10px;
+}
+.compat-value{
+  font-family:'Playfair Display',serif;font-weight:900;font-size:36px;color:#ff66b2;
+  margin-top:12px;text-shadow:0 0 10px rgba(255,102,178,0.5);
+}
+.compat-note{
+  font-family:'Cormorant Garamond',serif;font-weight:600;font-size:18px;color:#e8e2d2;
+  margin-top:6px;font-style:italic;opacity:0;transition:opacity .6s;
+}
+.compat-note.show{opacity:1}
+
+@media(max-width:560px){
+  .game-title{font-size:50px;margin-bottom:30px}
+  .menu-btn{font-size:24px}
+  #dialog-box{padding:20px 20px 20px;min-height:180px}
+  #dialog-text{font-size:18px}
+  .option-btn{font-size:15px;padding:6px 12px}
+  #game-over h1,#game-win h1{font-size:28px}
+  .game-text{font-size:16px}
+  .compat-value{font-size:28px}
+  #dialog-box::after{width: 70px; height: 70px; right: -5px; bottom: -5px;}
+  #dialog-box::before{width: 100px; left: 15px;}
+}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+
+  <div id="screen-title">
+    <div class="game-title">storylove</div>
+    <div class="menu-buttons">
+      <button class="menu-btn" onclick="window.startGame()">Start</button>
+      <button class="menu-btn" onclick="window.showAbout()">about</button>
+      <button class="menu-btn" onclick="alert('Выход невозможен, это же история любви ✨')">exit</button>
+    </div>
+  </div>
+
+  <div id="screen-game">
+    <div id="stage">
+      <canvas id="canvas" width="1000" height="520"></canvas>
+      <div id="top-bar">
+        <span class="tag" id="chapter-tag">Наша история</span>
+        <button class="tag-btn" onclick="window.returnToMenu()">В меню</button>
+      </div>
+    </div>
+    
+    <div id="dialog-container">
+      <div id="dialog-box">
+        <div id="speaker">НАША ИСТОРИЯ</div>
+        <div id="dialog-text"></div>
+        <div id="dialog-options"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-over">
+    <h1>Конец истории</h1>
+    <div class="game-text" id="game-over-text"></div>
+    <div class="broken-heart">💔</div>
+    <button class="option-btn" style="margin-top:24px" onclick="window.restartGame()">Попробовать заново</button>
+  </div>
+
+  <div id="game-win">
+    <h1>Ты умничка!</h1>
+    <div class="game-text" id="game-win-text">
+      Ты смог пройти эту игру, я тебя очень люблю! Надеюсь, мы потом дополним эту игру новым нашим этапом!
+    </div>
+    <div class="compat-meter">
+      <div class="compat-label">СОВМЕСТИМОСТЬ</div>
+      <div class="compat-bar"><div class="compat-fill" id="compat-fill"></div></div>
+      <div class="compat-value" id="compat-value">0%</div>
+      <div class="compat-note" id="compat-note"></div>
+    </div>
+    <div class="heart-anim">❤️</div>
+    <button class="option-btn" style="margin-top:20px" onclick="window.restartGame()">Пройти ещё раз</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const canvas       = document.getElementById("canvas");
+const ctx          = canvas.getContext("2d");
+const dialogBox    = document.getElementById("dialog-box");
+const dialogText   = document.getElementById("dialog-text");
+const dialogOptions= document.getElementById("dialog-options");
+const speakerEl    = document.getElementById("speaker");
+const chapterTag   = document.getElementById("chapter-tag");
+const screenTitle  = document.getElementById("screen-title");
+const screenGame   = document.getElementById("screen-game");
+const gameOverScr  = document.getElementById("game-over");
+const gameWinScr   = document.getElementById("game-win");
+
+let gameActive = false;
+let now = 0;
+let scene = "forest";
+let sceneBlend = 0;
+let actors = [];
+let animation = null;
+let hearts = [];
+let leaves = [];
+let fireflies = [];
+let girlHappy = false;
+let boyLean = 0;
+let girlTilt = 0;
+let attraction = 0;
+let examined = false;
+let dialogTimeout = null;
+
+const clamp = v => Math.max(0, Math.min(1, v));
+const ease  = v => { v = clamp(v); return v*v*(3-2*v); };
+const mix   = (a,b,t) => a + (b-a)*t;
+const mixColor = (a,b,t) =>
+  "rgb(" + Math.round(a[0]+(b[0]-a[0])*t) + "," +
+          Math.round(a[1]+(b[1]-a[1])*t) + "," +
+          Math.round(a[2]+(b[2]-a[2])*t) + ")";
+
+/* ============ УТИЛИТЫ ДЛЯ РИСОВАНИЯ ============ */
+function rect(x,y,w,h,color){
+  ctx.fillStyle=color;
+  ctx.fillRect(Math.round(x),Math.round(y),w,h);
+}
+function poly(points,color){
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.moveTo(points[0][0],points[0][1]);
+  for(var i=1;i<points.length;i++){
+    ctx.lineTo(points[i][0],points[i][1]);
+  }
+  ctx.closePath();ctx.fill();
+}
+function line(points,color,width){
+  ctx.strokeStyle=color;ctx.lineWidth=width||1;
+  ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
+  for(var i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+  ctx.stroke();
+}
+function ellipseFill(x,y,rx,ry,color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+  ctx.fill();
+}
+
+/* ============ ДИАЛОГИ С РУЧНЫМ ПЕРЕКЛЮЧЕНИЕМ ============ */
+function say(text, options, name, onNext){
+  if (dialogTimeout) clearTimeout(dialogTimeout);
+  
+  dialogBox.classList.add("fade-out");
+  
+  dialogTimeout = setTimeout(() => {
+    dialogText.textContent = text;
+    speakerEl.textContent  = name || "НАША ИСТОРИЯ";
+    dialogOptions.innerHTML = "";
+    
+    if (options && options.length > 0) {
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option-btn";
+        btn.textContent = opt[0];
+        btn.addEventListener("click", () => {
+          if(!gameActive) return;
+          dialogOptions.innerHTML = "";
+          opt[1]();
+        });
+        dialogOptions.appendChild(btn);
+      });
+    } else if (onNext) {
+      // Если нет вариантов выбора, но есть текст для чтения — добавляем кнопку "Далее"
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option-btn";
+      btn.textContent = "Далее";
+      btn.addEventListener("click", () => {
+        if(!gameActive) return;
+        dialogOptions.innerHTML = "";
+        onNext();
+      });
+      dialogOptions.appendChild(btn);
+    }
+
+    dialogBox.classList.remove("fade-out");
+  }, 600);
+}
+
+function animate(duration, update, done){
+  animation = { start: performance.now(), duration: duration,
+                update: update, done: done };
+}
+
+/* ============ ДЕТАЛИЗИРОВАННЫЙ ФОН ============ */
+function drawBackground(){
+  const n = sceneBlend;
+  const isNight = n > 0.5;
+
+  const grad = ctx.createLinearGradient(0,0,0,520);
+  
+  if (n <= 0.5) {
+    const t = n * 2;
+    grad.addColorStop(0, mixColor([102,129,131], [220, 120, 90], t));
+    grad.addColorStop(0.5, mixColor([150,160,160], [240, 150, 120], t));
+    grad.addColorStop(1, mixColor([201,185,153], [180, 90, 100], t));
+  } else {
+    const t = (n - 0.5) * 2;
+    grad.addColorStop(0, mixColor([220, 120, 90], [16,24,47], t));
+    grad.addColorStop(0.5, mixColor([240, 150, 120], [30, 35, 60], t));
+    grad.addColorStop(1, mixColor([180, 90, 100], [45, 45, 70], t));
+  }
+  
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,1000,520);
+
+  if (n > 0.4){
+    ctx.globalAlpha = (n-0.4)/0.6;
+    for(let i=0;i<80;i++){
+      const sx=(i*173+47)%1000, sy=(i*61+19)%280;
+      ctx.fillStyle = i%5===0 ? "#fff" : "#e6d6b5";
+      ctx.fillRect(sx, sy, i%3===0?2:1, i%3===0?2:1);
+    }
+    const moonGlow = ctx.createRadialGradient(800,100,0,800,100,150);
+    moonGlow.addColorStop(0,"rgba(255,230,180,0.4)");
+    moonGlow.addColorStop(1,"rgba(255,230,180,0)");
+    ctx.fillStyle = moonGlow;
+    ctx.beginPath(); ctx.arc(800,100,150,0,Math.PI*2); ctx.fill();
+    ellipseFill(800,100,30,30,"#f9e7bf");
+    ellipseFill(810,90,25,25,mixColor([16,24,47],[45,45,70],(n-0.5)*2));
+    ctx.globalAlpha = 1;
+  }
+
+  if (scene === "forest"){
+    for (let layer=0; layer<3; layer++){
+      const treeAlpha = 1 - layer*0.3;
+      const baseCol = mixColor([35,60,55],[15,30,40],n);
+      ctx.globalAlpha = treeAlpha;
+      
+      for (let j=0; j<12; j++){
+        const x = j*90 - 40 + layer*20;
+        const yOffset = layer*15;
+        rect(x+35,yOffset+150,12,300,baseCol);
+        poly([[x-20,yOffset+220],[x+40,yOffset+50],[x+100,yOffset+220]],baseCol);
+        poly([[x-30,yOffset+280],[x+40,yOffset+120],[x+110,yOffset+280]],baseCol);
+        poly([[x-10,yOffset+180],[x+40,yOffset+30],[x+90,yOffset+180]],baseCol);
+      }
+    }
+    ctx.globalAlpha = 1;
+    const fog = ctx.createLinearGradient(0,300,0,520);
+    fog.addColorStop(0,"rgba(200,220,220,0)");
+    fog.addColorStop(1,isNight?"rgba(20,30,40,0.6)":"rgba(200,220,220,0.4)");
+    ctx.fillStyle = fog;
+    ctx.fillRect(0,300,1000,220);
+
+  } else if (scene === "university"){
+    const wallCol = mixColor([190, 180, 160], [70, 75, 85], n);
+    const shadowCol = mixColor([150, 140, 120], [50, 55, 65], n);
+    const roofCol = mixColor([100, 60, 50], [40, 25, 35], n);
+    const winGlass = mixColor([80, 100, 120], [30, 40, 60], n);
+    const winFrame = mixColor([240, 230, 210], [100, 100, 110], n);
+
+    poly([[80, 100], [920, 100], [820, 20], [180, 20]], roofCol);
+    rect(180, 20, 640, 10, mixColor([80, 45, 40], [30, 20, 25], n));
+    rect(100, 100, 800, 320, wallCol);
+    
+    for(let r=0; r<15; r++){
+      rect(100, 100+r*22, 800, 2, shadowCol);
+    }
+    
+    rect(380, 100, 240, 320, shadowCol);
+    poly([[370, 100], [630, 100], [580, 40], [420, 40]], roofCol);
+    
+    rect(430, 310, 140, 110, mixColor([70, 45, 35], [30, 20, 15], n));
+    ctx.fillStyle = mixColor([90, 55, 45], [40, 25, 20], n);
+    ctx.beginPath(); ctx.arc(500, 310, 70, Math.PI, 0); ctx.fill();
+    rect(460, 360, 4, 12, "#d4af37");
+    rect(536, 360, 4, 12, "#d4af37");
+
+    rect(400, 420, 200, 10, mixColor([160, 150, 130], [60, 65, 75], n));
+    rect(380, 430, 240, 10, mixColor([140, 130, 110], [50, 55, 65], n));
+    rect(360, 440, 280, 10, mixColor([120, 110, 90], [40, 45, 55], n));
+
+    for(let c=0; c<4; c++){
+      const cx = 140 + c*200;
+      if (cx > 380 && cx < 620) continue;
+      rect(cx+30, 110, 10, 310, shadowCol);
+      rect(cx, 110, 30, 310, winFrame);
+      rect(cx-10, 410, 50, 15, shadowCol);
+      rect(cx-5, 105, 40, 15, shadowCol);
+    }
+
+    for(let row=0; row<3; row++){
+      for(let col=0; col<2; col++){
+        const wxL = 220 + col*130;
+        const wy = 150 + row*80;
+        rect(wxL, wy, 50, 60, winGlass);
+        rect(wxL-5, wy-5, 60, 5, winFrame);
+        
+        const wxR = 520 + col*130;
+        rect(wxR, wy, 50, 60, winGlass);
+        rect(wxR-5, wy-5, 60, 5, winFrame);
+        
+        if (isNight) {
+          ctx.fillStyle = "rgba(255, 210, 100, 0.7)";
+          ctx.fillRect(wxL, wy, 50, 60);
+          ctx.fillRect(wxR, wy, 50, 60);
+        }
+        rect(wxL+23, wy, 4, 60, winFrame);
+        rect(wxL, wy+28, 50, 4, winFrame);
+        rect(wxR+23, wy, 4, 60, winFrame);
+        rect(wxR, wy+28, 50, 4, winFrame);
+      }
+    }
+
+    for(let b=0; b<6; b++){
+      const bx = 150 + b*130;
+      if (bx > 360 && bx < 640) continue;
+      ellipseFill(bx, 415, 25, 20, mixColor([50, 90, 50], [20, 40, 25], n));
+      ellipseFill(bx-10, 418, 15, 15, mixColor([40, 80, 40], [15, 35, 20], n));
+    }
+
+  } else if (scene === "street"){
+    for (let i=0; i<6; i++){
+      const bw = 120 + (i%3)*40;
+      const bh = 250 + (i%4)*50;
+      rect(i*180-50, 400-bh, bw, bh, mixColor([60,65,70],[25,30,35],n));
+      
+      for(let r=0; r<5; r++){
+        for(let c=0; c<3; c++){
+          const wx = i*180-30 + c*35;
+          const wy = 400-bh + 20 + r*40;
+          if (wx < bw - 20) {
+            const isLit = (i+r+c)%3 === 0;
+            if (isNight && isLit){
+              rect(wx, wy, 20, 25, "rgba(255, 200, 100, 0.8)");
+            } else {
+              rect(wx, wy, 20, 25, mixColor([40,50,60],[15,20,25],n));
+            }
+          }
+        }
+      }
+    }
+
+    rect(850, 150, 6, 260, "#111");
+    rect(820, 150, 66, 6, "#111");
+    ctx.fillStyle = "#444";
+    poly([[820, 156], [830, 180], [876, 180], [886, 156]], "#222");
+    if (isNight) {
+      rect(830, 160, 46, 20, "#ffda88");
+      const lGlow = ctx.createRadialGradient(853, 170, 0, 853, 170, 120);
+      lGlow.addColorStop(0,"rgba(255,218,136,0.4)");
+      lGlow.addColorStop(1,"rgba(255,218,136,0)");
+      ctx.fillStyle = lGlow;
+      ctx.beginPath(); ctx.arc(853, 170, 120, 0, Math.PI*2); ctx.fill();
+    } else {
+      rect(830, 160, 46, 20, "#666");
+    }
+  }
+
+  const groundCol = mixColor([80,85,90],[30,35,45],n);
+  ctx.fillStyle = groundCol;
+  ctx.fillRect(0,410,1000,110);
+  
+  for(let gx=0; gx<1000; gx+=40){
+    for(let gy=415; gy<520; gy+=25){
+      ctx.fillStyle = mixColor([70,75,80],[25,30,40],n);
+      ctx.fillRect(gx + (gy%50===0?20:0), gy, 36, 21);
+      ctx.strokeStyle = mixColor([50,55,60],[15,20,25],n);
+      ctx.strokeRect(gx + (gy%50===0?20:0), gy, 36, 21);
+    }
+  }
+}
+
+/* ============ ЛИСТЬЯ И СВЕТЛЯЧКИ ============ */
+function spawnLeaf(){
+  leaves.push({
+    x: Math.random()*1000, y: -20 - Math.random()*60,
+    vx: 0.4 + Math.random()*0.6, vy: 0.7 + Math.random()*0.9,
+    rot: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.06,
+    size: 4 + Math.random()*4,
+    color: ["#c9843a","#d4a555","#b46a2a","#a8552a","#c47f2f"][Math.floor(Math.random()*5)],
+    sway: Math.random()*Math.PI*2
+  });
+}
+function updateLeaves(){
+  if ((scene==="forest"||scene==="street") && sceneBlend < 0.6 && Math.random() < 0.08){
+    spawnLeaf();
+  }
+  leaves.forEach(l => {
+    l.x += l.vx + Math.sin(now*0.002 + l.sway)*0.6;
+    l.y += l.vy; l.rot += l.rotSpeed;
+  });
+  leaves = leaves.filter(l => l.y < 540 && l.x < 1050);
+}
+function drawLeaves(){
+  leaves.forEach(l => {
+    ctx.save();
+    ctx.translate(l.x, l.y);
+    ctx.rotate(l.rot);
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = l.color;
+    ctx.beginPath();
+    ctx.ellipse(0,0,l.size,l.size*0.6,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-l.size,0); ctx.lineTo(l.size,0); ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function initFireflies(){
+  fireflies = [];
+  for (let i=0;i<25;i++){
+    fireflies.push({
+      x: Math.random()*1000, y: 150 + Math.random()*250,
+      phase: Math.random()*Math.PI*2, speed: 0.4 + Math.random()*1.4
+    });
+  }
+}
+function drawFireflies(){
+  if (sceneBlend < 0.5) return;
+  const alpha = (sceneBlend-0.5)/0.5;
+  fireflies.forEach(f => {
+    const ox = Math.sin(now*0.001*f.speed + f.phase)*25;
+    const oy = Math.cos(now*0.0013*f.speed + f.phase)*20;
+    const pulse = 0.4 + Math.sin(now*0.004 + f.phase)*0.4;
+    const a = alpha*pulse;
+    if (a <= 0.05) return;
+    const gx = f.x+ox, gy = f.y+oy;
+    const glow = ctx.createRadialGradient(gx,gy,0,gx,gy,18);
+    glow.addColorStop(0,"rgba(255,230,130,"+(a*0.4)+")");
+    glow.addColorStop(1,"rgba(255,230,130,0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(gx,gy,18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = "rgba(255,240,160,"+a+")";
+    ctx.beginPath(); ctx.arc(gx,gy,2.5,0,Math.PI*2); ctx.fill();
+  });
+}
+
+/* ============ СЕРДЕЧКИ ============ */
+function heart(x,y,s,alpha){
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.translate(Math.round(x),Math.round(y));ctx.scale(s,s);
+  poly([[0,2],[2,0],[4,0],[6,2],[8,0],[10,0],
+   [12,2],[12,6],[6,12],[0,6]],"#ef8ea8");
+  rect(2,2,2,2,"#ffd8de");
+  ctx.restore();
+}
+function pushHeart(x,y){
+  hearts.push({ x:x, y:y, born: performance.now(), life: 2500, drift: (Math.random()-0.5)*30 });
+}
+function drawHearts(){
+  hearts = hearts.filter(h => now < h.born + h.life);
+  hearts.forEach(h => {
+    const el = now - h.born; if (el < 0) return;
+    const p = el / h.life;
+    const x = h.x + h.drift*p;
+    const y = h.y - p*110;
+    const s = 1.4 - p*0.6;
+    heart(x,y,s,1-p);
+  });
+}
+
+/* ============ ПЕРСОНАЖИ ============ */
+function drawPerson(actor){
+  if (actor.alpha === 0) return;
+  const male = actor.kind === "boy";
+  const walking = actor.walking;
+  const step = walking?Math.sin(now*0.011):0;
+  const bob = walking?Math.abs(step)*1.4:Math.sin(now*.0018)*.25;
+  const skin="#efb184",light="#fac599",shade="#c88164";
+  const outline="#28232a";
+  const hair=male?"#352923":actor.kind==="blonde"?"#c29643":"#543329";
+  const hairLight=male?"#51382e":actor.kind==="blonde"?"#f0d080":"#80503a";
+  const clothes=male?"#172534":actor.kind==="blonde"?"#536b82":"#654333";
+  const clothLight=male?"#223547":actor.kind==="blonde"?"#718ba0":"#835b43";
+
+  ctx.save();
+  ctx.globalAlpha = actor.alpha;
+  ctx.translate(Math.round(actor.x),430);
+  ctx.scale(2.55,2.55);
+
+  ctx.fillStyle="#10192466";
+  ctx.beginPath();ctx.ellipse(0,0,21,3,0,0,Math.PI*2);ctx.fill();
+  ctx.translate(0,-bob);
+
+  [-1,1].forEach(function(side){
+    var lx=side<0?-13:3;
+    var stride=step*side*3;
+    ctx.save();ctx.translate(stride,0);
+    rect(lx-1,-52,12,40,outline);
+    rect(lx,-51,10,36,skin);
+    rect(lx,-50,3,34,shade);
+    rect(lx+3,-47,6,22,light);
+    rect(lx+4,-34,5,3,"#dc9a75");
+    rect(lx,-17,10,13,"#8d959a");
+    rect(lx+2,-16,7,11,"#e6e9e8");
+    rect(lx-4,-5,18,7,"#626a73");
+    rect(lx-6,-2,21,5,"#e4ded6");
+    rect(lx-5,-4,16,3,"#faf6ee");
+    rect(lx-7,3,23,2,"#555e68");
+    rect(lx-6,2,21,2,"#e8e7e1");
+    rect(lx+2,-4,7,1,"#a3a5aa");
+    ctx.restore();
+  });
+
+  if(male){
+    poly([[-19,-83],[18,-83],[18,-50],[3,-49],
+     [0,-70],[-3,-49],[-19,-50]],outline);
+    rect(-17,-80,34,13,"#182633");
+    rect(-17,-69,14,18,"#1d2b3b");
+    rect(3,-69,13,18,"#192737");
+    rect(-16,-81,32,3,"#101b27");
+    rect(9,-58,5,2,"#e2e8e9");
+    rect(13,-61,2,4,"#e2e8e9");
+  }else{
+    poly([[-17,-85],[17,-85],[16,-19],[3,-19],
+     [0,-65],[-3,-19],[-16,-19]],"#233345");
+    rect(-14,-80,11,58,"#46647a");
+    rect(4,-80,10,58,"#3c596f");
+    rect(-13,-75,3,40,"#638296");
+    rect(5,-46,7,3,"#7591a0");
+    rect(-15,-22,12,4,"#688091");
+    rect(3,-22,12,4,"#688091");
+  }
+
+  if(!male){
+    poly([[-13,-133],[12,-133],[16,-114],[18,-94],
+     [10,-87],[-15,-91],[-18,-111]],hair);
+    rect(-15,-124,3,28,hairLight);
+    rect(12,-120,3,24,"#382b28");
+  }
+
+  var armSwing=walking?step*2:0;
+  ctx.save();ctx.translate(0,armSwing);
+  poly([[-18,-111],[-24,-109],[-25,-99],[-24,-63],
+   [-21,-58],[-16,-60],[-17,-99]],outline);
+  rect(-23,-103,7,38,skin);
+  rect(-23,-100,2,33,shade);
+  rect(-20,-99,3,27,light);
+  rect(-23,-66,7,7,skin);
+  rect(-22,-62,2,4,shade);
+  rect(-18,-66,2,5,shade);
+  ctx.restore();
+
+  poly([[18,-112],[24,-108],[29,-94],[27,-83],
+   [19,-72],[13,-75],[20,-86],[21,-94],[15,-101]],outline);
+  poly([[19,-108],[23,-105],[27,-94],[25,-85],
+   [18,-76],[14,-77],[21,-87],[23,-94],[16,-102]],skin);
+  rect(23,-95,3,10,shade);
+  rect(17,-82,5,4,light);
+  rect(13,-78,5,5,skin);
+  rect(14,-76,2,3,shade);
+
+  poly([[-11,-116],[10,-116],[22,-111],[23,-99],
+   [16,-96],[17,-83],[-18,-83],[-17,-98],[-25,-100],
+   [-23,-109]],outline);
+  poly([[-10,-114],[9,-114],[20,-109],[20,-101],
+   [14,-99],[14,-85],[-15,-85],[-15,-101],[-22,-102],
+   [-20,-108]],clothes);
+  rect(-15,-106,3,18,clothLight);
+  rect(-12,-89,23,3,"#ffffff08");
+  rect(11,-102,3,17,"#0d1b2888");
+  rect(-21,-104,6,2,clothLight);
+  rect(15,-103,5,2,clothLight);
+  if(male){
+    rect(8,-105,2,6,"#8f4031");
+    rect(7,-101,5,2,"#8f4031");
+  }else{
+    rect(-1,-111,1,25,"#bc946b");
+    rect(4,-101,7,1,clothLight);
+  }
+
+  rect(-4,-122,8,10,shade);
+  rect(-2,-121,6,9,skin);
+  poly([[-8,-114],[-1,-108],[0,-102],[3,-111],
+   [8,-115],[4,-117],[0,-113],[-4,-117]],male?"#101e2b":"#49382f");
+
+  ctx.save();
+  ctx.translate(0,-117);
+  if(male){
+    ctx.translate(boyLean*6,0);
+    ctx.rotate(boyLean*.42);
+  }else if(actor.kind==="brunette"){
+    ctx.rotate(-girlTilt*.09);
+  }
+  ctx.translate(0,117);
+  poly([[-10,-137],[8,-137],[12,-131],[12,-120],
+   [7,-113],[-5,-113],[-11,-120]],outline);
+  rect(-9,-134,19,14,skin);
+  rect(-7,-120,15,4,skin);
+  rect(-4,-116,10,2,shade);
+  rect(-9,-132,3,12,shade);
+  rect(-6,-133,13,5,light);
+  rect(7,-130,3,9,"#e5a178");
+  rect(-12,-128,3,7,shade);
+  rect(-11,-127,2,4,skin);
+  rect(10,-128,3,7,shade);
+
+  poly([[-12,-130],[-13,-137],[-9,-142],[-4,-143],
+   [-4,-145],[3,-144],[6,-145],[12,-141],[14,-135],
+   [11,-129],[7,-131],[3,-133],[-1,-131],[-5,-133],
+   [-8,-128]],hair);
+  rect(-10,-138,4,3,hairLight);
+  rect(-4,-141,4,3,hairLight);
+  rect(3,-140,4,2,hairLight);
+  rect(9,-136,3,3,hairLight);
+  rect(-7,-134,3,4,"#251f2388");
+  if(!male){
+    rect(-13,-132,4,22,hair);
+    rect(-12,-128,2,15,hairLight);
+    rect(10,-133,4,21,hair);
+    rect(11,-128,2,16,hairLight);
+  }
+
+  var happy=actor.kind==="brunette"&&girlHappy;
+  if(male&&boyLean>.5){
+    rect(4,-129,5,1,"#503b32");
+    rect(5,-127,4,1,"#342b2c");
+    rect(10,-126,3,3,skin);
+    rect(10,-121,2,1,"#a75b52");
+  }else if(happy){
+    line([[-7,-126],[-5,-128],[-2,-126]],"#403035",1);
+    line([[3,-126],[6,-128],[8,-126]],"#403035",1);
+    rect(-8,-122,5,2,"#d8827c");
+    rect(4,-122,5,2,"#d8827c");
+    rect(-1,-118,5,1,"#a45651");
+  }else{
+    rect(-8,-130,7,2,hair);
+    rect(3,-130,6,2,hair);
+    rect(-7,-127,6,3,"#f7eee2");
+    rect(3,-127,6,3,"#f7eee2");
+    rect(-4,-127,2,3,"#34322f");
+    rect(6,-127,2,3,"#34322f");
+    rect(0,-125,2,5,shade);
+    rect(-2,-118,7,1,"#a65d53");
+    rect(-1,-117,5,1,"#c77b66");
+  }
+  ctx.restore();
+  ctx.restore();
+}
+
+/* ============ ЦИКЛ ============ */
+function frame(time){
+  now = time;
+  if (gameActive){
+    if (animation){
+      const cur = animation;
+      const p = clamp((time - cur.start) / cur.duration);
+      cur.update(p);
+      if (p >= 1 && animation === cur){
+        animation = null;
+        if (cur.done) cur.done();
+      }
+    }
+
+    drawBackground();
+    updateLeaves();
+    drawLeaves();
+    drawFireflies();
+
+    const order = actors.slice().sort((a,b) => {
+      if (a.kind === "boy") return 1;
+      if (b.kind === "boy") return -1;
+      return 0;
+    });
+    order.forEach(drawPerson);
+
+    if (boyLean > 0.97 && girlHappy){
+      const pulse = 1 + Math.sin(time*0.012)*0.3;
+      heart(515, 95, pulse*0.8, 0.9);
+    }
+    drawHearts();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ============ ЛОГИКА ИГРЫ ============ */
+function resetState(){
+  animation = null; actors = []; hearts = []; leaves = []; fireflies = [];
+  boyLean = 0; girlTilt = 0; girlHappy = false;
+  scene = "forest"; sceneBlend = 0; attraction = 12; examined = false;
+  if (dialogTimeout) clearTimeout(dialogTimeout);
+}
+function actor(kind, x){
+  return { kind: kind, x: x, walking: false, alpha: 1 };
+}
+
+function startGame(){
+  resetState();
+  initFireflies();
+  gameActive = true;
+
+  screenTitle.style.display = "none";
+  screenGame.style.display = "flex";
+  screenGame.classList.add("active");
+  gameOverScr.style.display = "none";
+  gameWinScr.style.display = "none";
+
+  actors = [actor("boy", 230)];
+  chapterTag.textContent = "Глава 1 · Начало";
+
+  say(
+    "Добро пожаловать в историю! тут ты не имеешь ограничений в своих действиях, перед тобой будут стоять сложные или не совсем жизненные вопросы.",
+    [["Начать", sceneUniversity]],
+    "НАША ИСТОРИЯ"
+  );
+}
+
+function sceneUniversity(){
+  scene = "university";
+  chapterTag.textContent = "Глава 1 · Университет";
+  say("Перед тобой университет. Твои действия?", [
+    ["Поступить на ВТФ", sceneKMB],
+    ["Не поступать", () => gameOver("Ты решил не поступать. Жизнь пошла по другому пути...")]
+  ]);
+}
+
+function sceneKMB(){
+  scene = "street";
+  chapterTag.textContent = "Глава 2 · КМБ";
+  say("Ты успешно поступил! Теперь тебе предлагают вести КМБ. Согласишься?", [
+    ["Вести КМБ", sceneKMBWin],
+    ["Отказаться", () => gameOver("Ты отказался. Возможно, это была твоя судьба...")]
+  ]);
+}
+
+function sceneKMBWin(){
+  say("Умничка! Ты руководитель КМБ. Удачи!", [
+    ["Дальше", sceneMeeting]
+  ]);
+}
+
+function sceneMeeting(){
+  scene = "street";
+  chapterTag.textContent = "Глава 3 · Та самая";
+
+  const brunette = actor("brunette", 800);
+  brunette.alpha = 0;
+  actors.push(brunette);
+  animate(900, t => { brunette.alpha = t; });
+
+  say("Ты замечаешь девушку с каштановыми волосами. Она улыбается тебе. Твои действия?", [
+    ["Присмотреться", sceneExamine],
+    ["Заговорить", sceneTalking],
+    ["Пройти мимо", () => gameOver("Ты прошел мимо. Иногда судьба дает нам знаки, но мы их игнорируем...")]
+  ]);
+}
+
+function sceneExamine(){
+  if (!examined){ attraction += 10; examined = true; }
+  say(
+    "Девушка с голубыми глазами, немного застенчива и улыбается тебе. В её взгляде читается что-то тёплое.",
+    [
+      ["Заговорить", sceneTalking],
+      ["Пройти мимо", () => gameOver("Ты прошел мимо.Возможно ты упустил свою судьбу...")]
+    ],
+    "НАБЛЮДЕНИЕ"
+  );
+}
+
+function sceneTalking(){
+  attraction += 15;
+  const boy = actors[0];
+  const brunette = actors.find(a => a.kind === "brunette");
+  
+  if (boy && brunette) {
+    const bx = boy.x, gx = brunette.x;
+    boy.walking = true; brunette.walking = true;
+    animate(2000, t => {
+      boy.x = mix(bx, 350, ease(t));
+      brunette.x = mix(gx, 600, ease(t));
+    }, () => {
+      boy.walking = false; brunette.walking = false;
+      say("Вы мило общаетесь... Время летит незаметно.", [
+        ["Далее", () => {
+          say("Вдруг появляется еще одна девушка — блондинка. Ты с ней уже знаком, и она явно пришла не просто так.", [
+            ["Далее", startBlondeEntrance]
+          ]);
+        }]
+      ]);
+    });
+  } else {
+    say("Вы мило общаетесь... Время летит незаметно. Вдруг появляется еще одна девушка — блондинка.", [
+      ["Далее", startBlondeEntrance]
+    ]);
+  }
+}
+
+function startBlondeEntrance() {
+  const blonde = actor("blonde", 1100);
+  blonde.walking = true;
+  actors.push(blonde);
+  const brunette = actors.find(a => a.kind === "brunette");
+  
+  animate(2500, t => {
+    blonde.x = mix(1100, 800, ease(t));
+    if (brunette) brunette.x = mix(600, 550, ease(t));
+  }, () => {
+    blonde.walking = false;
+    if (brunette) brunette.walking = false;
+    blondeHandshake();
+  });
+}
+
+function blondeHandshake() {
+  say("Блондинка подходит, улыбаясь тебе, игнорируя шатенку. Долго и крепко жмёт твою руку, заглядывая в глаза. Кажется, она делает это специально.", [
+    ["Выбрать блондинку", () => gameOver("Ты поддался её чарам. Но она играла с тобой ради потехи. Это не твоя история...")],
+    ["Высвободить руку и выбрать шатенку", chooseBrunette]
+  ]);
+}
+
+function chooseBrunette(){
+  attraction += 10;
+  say("Ты мягко, но уверенно высвобождаешь руку. Блондинка недовольна, разворачивается и уходит, понимая, что проиграла. Ты остаёшься с шатенкой.", [
+    ["Далее", () => {
+      const blonde = actors.filter(a => a.kind === "blonde")[0];
+      const brunette = actors.find(a => a.kind === "brunette");
+      
+      if (blonde) blonde.walking = true;
+      if (brunette) brunette.walking = true;
+
+      animate(2400, t => {
+        if (blonde) {
+          blonde.x = mix(800, 1150, ease(t));
+          blonde.alpha = 1 - t;
+        }
+        if (brunette) {
+          brunette.x = mix(550, 700, ease(t)); 
+        }
+      }, () => {
+        actors = actors.filter(a => a.kind !== "blonde");
+        if (brunette) brunette.walking = false;
+        
+        say("Солнце садится за горизонт, небо окрашивается в тёплые тона...");
+        chapterTag.textContent = "Глава 4 · Под луной";
+
+        const startBlend = sceneBlend;
+        animate(8000, t => {
+          sceneBlend = mix(startBlend, 1, ease(t));
+        }, () => {
+          sceneBlend = 1;
+          say("Наступает вечер. Вы остались вдвоём, и тебе совсем не хочется прощаться. Твои действия?", [
+            ["Предложить встречаться", sceneBeforeKiss],
+            ["Остаться друзьями", () => gameOver("Твоя любовь найдётся потом...")]
+          ]);
+        });
+      });
+    }]
+  ]);
+}
+
+function sceneBeforeKiss(){
+  attraction += 15;
+  say("— Давай будем вместе?\nОна улыбается и тихо отвечает: «Да».", [], "ВЫ ВДВОЁМ", () => {
+    const boy  = actors[0];
+    const girl = actors[1];
+    if (!boy || !girl) return;
+
+    const bx = boy.x, gx = girl.x;
+    boy.walking = true; girl.walking = true;
+
+    animate(2400, t => {
+      const p = ease(t);
+      boy.x  = mix(bx, 468, p);
+      girl.x = mix(gx, 532, p);
+    }, () => {
+      boy.walking = false; girl.walking = false;
+      sceneKiss();
+    });
+  });
+}
+
+function sceneKiss(){
+  let contact = false;
+  say("", [], "ПОД ЛУНОЙ");
+
+  animate(5200, t => {
+    const sec = t * 5.2;
+    if (sec < 1.6){
+      boyLean = ease(sec/1.6);
+      girlTilt = boyLean;
+    } else if (sec < 3.3){
+      boyLean = 1; girlTilt = 1; girlHappy = true;
+      if (!contact){
+        contact = true;
+        for (let i=0;i<7;i++){
+          pushHeart(520 + (i%3)*20 - 20, 105 + (i%2)*16);
+        }
+      }
+    } else {
+      boyLean = 1 - ease((sec-3.3)/1.9);
+      girlTilt = boyLean;
+      girlHappy = true;
+    }
+  }, () => {
+    boyLean = 0; girlTilt = 0;
+    say("Она смущённо улыбается. Теперь у вас начинается новая, общая история.", [
+      ["Обнять её", sceneHug]
+    ]);
+  });
+}
+
+function sceneHug(){
+  attraction += 13;
+  say("Вы стоите рядом под луной. Иногда хватает даже молчания, чтоб понять, что это тот самый человечек.", [], null, () => {
+    const boy = actors[0], girl = actors[1];
+    if (!boy || !girl) { showWalkChoice(); return; }
+    const bx = boy.x, gx = girl.x;
+
+    animate(1300, t => {
+      boy.x  = mix(bx, 480, ease(t));
+      girl.x = mix(gx, 520, ease(t));
+    }, () => {
+      say("И это только начало.", [
+        ["Куда пойдём?", showWalkChoice]
+      ]);
+    });
+  });
+}
+
+function showWalkChoice(){
+  chapterTag.textContent = "Глава 5 · Прогулка";
+  say("Ночь ещё молода, и вам совсем не хочется расходиться. Куда пойдём?", [
+    ["В парк", walkPark],
+    ["В кафе", walkCafe],
+    ["На набережную", walkEmbankment]
+  ]);
+}
+
+function walkPark(){
+  attraction += 10;
+  scene = "forest"; sceneBlend = 1;
+  say(
+    "Вы гуляете по тихому парку. Фонари рисуют на дорожках золотые пятна, листва шелестит под лёгким ветром. Она берёт тебя под руку — и кажется, время остановилось именно для вас.",
+    [["Дальше", finalWin]]
+  );
+}
+
+function walkCafe(){
+  attraction += 15;
+  scene = "university"; sceneBlend = 1;
+  say(
+    "Вы заходите в уютное кафе. Тёплый свет, запах кофе и тихая музыка. За чашкой кофе разговоры становятся особенно искренними — вы смеётесь и не замечаете, как проходит время.",
+    [["Дальше", finalWin]]
+  );
+}
+
+function walkEmbankment(){
+  attraction += 20;
+  scene = "street"; sceneBlend = 1;
+  say(
+    "Вы идёте вдоль набережной. Вода отражает звёзды, лёгкий ветер приносит прохладу, а её рука — в твоей. Набережная — это место, где рождаются самые важные слова. И сегодня одно из них уже было сказано.",
+    [["Дальше", finalWin]]
+  );
+}
+
+function finalWin(){
+  attraction += 5;
+  winGame();
+}
+
+function gameOver(reason){
+  gameActive = false;
+  animation = null;
+  document.getElementById("game-over-text").textContent = reason;
+  screenGame.style.display = "none";
+  gameOverScr.style.display = "flex";
+}
+
+function winGame(){
+  gameActive = false;
+  animation = null;
+
+  const compat = Math.min(100, Math.round(attraction));
+  const fillEl = document.getElementById("compat-fill");
+  const valEl  = document.getElementById("compat-value");
+  const noteEl = document.getElementById("compat-note");
+
+  fillEl.style.width = "0%";
+  valEl.textContent = "0%";
+  noteEl.textContent = "";
+  noteEl.classList.remove("show");
+
+  let noteText;
+  if (compat >= 95)      noteText = "Идеальная пара! ✨";
+  else if (compat >= 85) noteText = "Прекрасная совместимость";
+  else if (compat >= 75) noteText = "Хорошая совместимость";
+  else if (compat >= 65) noteText = "Есть над чем поработать";
+  else                   noteText = "Всё ещё впереди";
+
+  screenGame.style.display = "none";
+  gameWinScr.style.display = "flex";
+
+  requestAnimationFrame(() => {
+    fillEl.style.width = compat + "%";
+    const startT = performance.now();
+    function countUp(t){
+      const p = Math.min(1, (t - startT) / 1500);
+      valEl.textContent = Math.round(compat * p) + "%";
+      if (p < 1) {
+        requestAnimationFrame(countUp);
+      } else {
+        noteEl.textContent = noteText;
+        noteEl.classList.add("show");
+      }
+    }
+    requestAnimationFrame(countUp);
+  });
+}
+
+function restartGame(){ startGame(); }
+
+function returnToMenu(){
+  gameActive = false;
+  animation = null;
+  resetState();
+  screenGame.style.display = "none";
+  screenGame.classList.remove("active");
+  gameOverScr.style.display = "none";
+  gameWinScr.style.display = "none";
+  screenTitle.style.display = "flex";
+  chapterTag.textContent = "Наша история";
+}
+
+function showAbout(){
+  alert(
+    "storylove — маленькая история о вашей встрече.\n\n" +
+    "Выбирай ответы, присматривайся к деталям и найди свою счастливую концовку. " +
+    "В конце игра покажет, насколько вы совместимы — но не волнуйся, если не 100%: " +
+    "настоящая совместимость в жизни куда сложнее любого процента 💫"
+  );
+}
+
+/* === ЭКСПОРТ В WINDOW ДЛЯ onclick === */
+window.startGame     = startGame;
+window.showAbout     = showAbout;
+window.restartGame   = restartGame;
+window.returnToMenu  = returnToMenu;
+
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
